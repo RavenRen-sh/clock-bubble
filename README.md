@@ -65,3 +65,7 @@ cargo run
 cargo tauri build
 ```
 构建产物将输出至 `src-tauri/target/release/`。
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 开源。
