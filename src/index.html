@@ -19,7 +19,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 预留 8px 外边距用于完整渲染窗口柔和发光/阴影，防止边缘裁切 */
+    /* 预留 8px 外边距渲染柔和高斯阴影，防止边缘被透明窗口硬裁切 */
     body {
       padding: 8px;
       display: flex;
@@ -27,7 +27,7 @@
       justify-content: center;
     }
 
-    /* 外层主气泡容器：上下两行布局、高斯模糊磨砂效果 */
+    /* 外层主气泡容器：上下两行卡片堆叠、高斯模糊磨砂效果 */
     .bubble {
       width: 100%;
       height: 100%;
@@ -50,19 +50,19 @@
       cursor: grabbing;
     }
 
-    /* 内部双层时钟卡片：横向 Flex 两端对齐，左侧城市名 + 右侧时间 */
+    /* 独立时钟卡片：内部上下 2 行布局（第 1 行城市名，第 2 行时间数字） */
     .clock-card {
       flex: 1 1 0;
       width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 0 14px;
+      justify-content: center;
+      padding: 6px 12px;
       pointer-events: none;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
@@ -72,15 +72,16 @@
       border-color: rgba(255, 255, 255, 0.18);
     }
 
-    /* 左侧组合：状态指示灯 + 完整城市名，锁定不压缩 */
+    /* 第 1 行：时区状态指示圆点 + 完整城市名称 */
     .label-box {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
     }
 
-    /* 状态指示圆点：严格固定 6x6 尺寸与比例，防止被挤压成椭圆 */
+    /* 状态指示圆点：固定尺寸 6x6 比例，正圆发光效果 */
     .indicator {
       width: 6px;
       height: 6px;
@@ -98,26 +99,27 @@
       box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
     }
 
-    /* 城市名称：不折行、不截断、不压缩 */
+    /* 城市名称：独占整行横向空间，不截断、不折行 */
     .label {
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       color: #a1a1aa;
       text-transform: uppercase;
       white-space: nowrap;
-      flex-shrink: 0;
+      text-align: center;
     }
 
-    /* 右侧时间：等宽跳秒数字，锁定尺寸与字距 */
+    /* 第 2 行：大号等宽时间数字，独占下方一行，绝不排挤到界面外 */
     .time {
-      font-size: 15px;
+      font-size: 18px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.03em;
       color: #fafafa;
       white-space: nowrap;
-      flex-shrink: 0;
+      margin-top: 3px;
+      text-align: center;
     }
   </style>
 </head>
