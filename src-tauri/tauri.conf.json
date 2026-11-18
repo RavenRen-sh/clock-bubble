@@ -12,8 +12,8 @@
       {
         "label": "main",
         "title": "Clock Bubble",
-        "width": 246,
-        "height": 106,
+        "width": 300,
+        "height": 104,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,

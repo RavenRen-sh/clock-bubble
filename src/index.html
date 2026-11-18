@@ -12,14 +12,14 @@
     }
 
     html, body {
-      inline-size: 100%;
-      block-size: 100%;
+      width: 100%;
+      height: 100%;
       background: transparent;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 留出 8px 外边距用于渲染柔和阴影，防止被窗口边缘裁切 */
+    /* 预留 8px 外边距用于完整渲染窗口柔和发光/阴影，防止边缘裁切 */
     body {
       padding: 8px;
       display: flex;
@@ -27,10 +27,10 @@
       justify-content: center;
     }
 
-    /* 调整为上下堆叠容器 */
+    /* 外层主气泡容器：上下两行布局、高斯模糊磨砂效果 */
     .bubble {
-      inline-size: 100%;
-      block-size: 100%;
+      width: 100%;
+      height: 100%;
       background: rgba(24, 24, 27, 0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -40,8 +40,8 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 7px;
-      padding: 7px;
+      gap: 8px;
+      padding: 8px;
       color: #f4f4f5;
       cursor: grab;
     }
@@ -50,19 +50,19 @@
       cursor: grabbing;
     }
 
-    /* 上下独立时钟卡片：左侧时区/城市名，右侧等宽时间 */
+    /* 内部双层时钟卡片：横向 Flex 两端对齐，左侧城市名 + 右侧时间 */
     .clock-card {
       flex: 1 1 0;
-      min-inline-size: 0;
-      inline-size: 100%;
+      width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 13px;
+      border-radius: 12px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-inline: 12px;
+      gap: 12px;
+      padding: 0 14px;
       pointer-events: none;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
@@ -72,31 +72,33 @@
       border-color: rgba(255, 255, 255, 0.18);
     }
 
+    /* 左侧组合：状态指示灯 + 完整城市名，锁定不压缩 */
     .label-box {
       display: flex;
       align-items: center;
-      gap: 7px;
-      min-inline-size: 0;
-      overflow: hidden;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
+    /* 状态指示圆点：严格固定 6x6 尺寸与比例，防止被挤压成椭圆 */
     .indicator {
-      inline-size: 6px;
-      block-size: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
     .local-indicator {
       background: #38bdf8;
-      box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
     }
 
     .beijing-indicator {
       background: #f59e0b;
-      box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
     }
 
+    /* 城市名称：不折行、不截断、不压缩 */
     .label {
       font-size: 11px;
       font-weight: 600;
@@ -104,24 +106,24 @@
       color: #a1a1aa;
       text-transform: uppercase;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      flex-shrink: 0;
     }
 
+    /* 右侧时间：等宽跳秒数字，锁定尺寸与字距 */
     .time {
       font-size: 15px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.03em;
       color: #fafafa;
+      white-space: nowrap;
       flex-shrink: 0;
-      margin-inline-start: 10px;
     }
   </style>
 </head>
 <body>
   <main class="bubble" data-tauri-drag-region>
-    <!-- 本地时钟卡片（上一行） -->
+    <!-- 本地时钟卡片 -->
     <article class="clock-card">
       <header class="label-box">
         <span class="indicator local-indicator" aria-hidden="true"></span>
@@ -130,7 +132,7 @@
       <time class="time" id="local-time">--:--:--</time>
     </article>
 
-    <!-- 北京时钟卡片（下一行） -->
+    <!-- 北京时钟卡片 -->
     <article class="clock-card">
       <header class="label-box">
         <span class="indicator beijing-indicator" aria-hidden="true"></span>
