@@ -19,7 +19,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* 预留 8px 外边距渲染柔和高斯阴影，防止边缘被透明窗口硬裁切 */
+    /* 预留 8px 外边距渲染柔和阴影，防止边缘硬裁切 */
     body {
       padding: 8px;
       display: flex;
@@ -27,7 +27,7 @@
       justify-content: center;
     }
 
-    /* 外层主气泡容器：上下两行卡片堆叠、高斯模糊磨砂效果 */
+    /* 外层主气泡容器：磨砂背景，圆角包裹并裁剪超限内容 */
     .bubble {
       width: 100%;
       height: 100%;
@@ -44,19 +44,21 @@
       padding: 8px;
       color: #f4f4f5;
       cursor: grab;
+      overflow: hidden;
     }
 
     .bubble:active {
       cursor: grabbing;
     }
 
-    /* 独立时钟卡片：内部上下 2 行布局（第 1 行城市名，第 2 行时间数字） */
+    /* 独立时钟卡片：自适应等分剩余高度，上下两行居中 */
     .clock-card {
       flex: 1 1 0;
+      min-height: 0;
       width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
+      border-radius: 13px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       display: flex;
       flex-direction: column;
@@ -65,6 +67,7 @@
       padding: 6px 12px;
       pointer-events: none;
       transition: background 0.15s ease, border-color 0.15s ease;
+      overflow: hidden;
     }
 
     .clock-card:hover {
@@ -72,16 +75,16 @@
       border-color: rgba(255, 255, 255, 0.18);
     }
 
-    /* 第 1 行：时区状态指示圆点 + 完整城市名称 */
+    /* 第 1 行：时区状态指示灯 + 完整城市名 */
     .label-box {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       width: 100%;
+      line-height: 1.2;
     }
 
-    /* 状态指示圆点：固定尺寸 6x6 比例，正圆发光效果 */
     .indicator {
       width: 6px;
       height: 6px;
@@ -99,7 +102,7 @@
       box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
     }
 
-    /* 城市名称：独占整行横向空间，不截断、不折行 */
+    /* 城市名称：行高锁定，横向空间充足不折行 */
     .label {
       font-size: 11px;
       font-weight: 600;
@@ -107,10 +110,11 @@
       color: #a1a1aa;
       text-transform: uppercase;
       white-space: nowrap;
+      line-height: 1.2;
       text-align: center;
     }
 
-    /* 第 2 行：大号等宽时间数字，独占下方一行，绝不排挤到界面外 */
+    /* 第 2 行：大号等宽数字时间，独占一行且高度受控 */
     .time {
       font-size: 18px;
       font-weight: 600;
@@ -118,7 +122,8 @@
       letter-spacing: 0.03em;
       color: #fafafa;
       white-space: nowrap;
-      margin-top: 3px;
+      line-height: 1.2;
+      margin-top: 4px;
       text-align: center;
     }
   </style>
