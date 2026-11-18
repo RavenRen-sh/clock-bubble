@@ -12,8 +12,8 @@
     }
 
     html, body {
-      width: 100%;
-      height: 100%;
+      inline-size: 100%;
+      block-size: 100%;
       background: transparent;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -28,18 +28,20 @@
     }
 
     .bubble {
-      width: 100%;
-      height: 100%;
-      background: rgba(24, 24, 27, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      inline-size: 100%;
+      block-size: 100%;
+      background: rgba(24, 24, 27, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 999px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
       display: flex;
       align-items: center;
-      justify-content: space-evenly;
-      padding: 0 16px;
+      justify-content: space-between;
+      gap: 8px;
+      padding-inline: 8px;
+      padding-block: 6px;
       color: #f4f4f5;
       cursor: grab;
     }
@@ -48,48 +50,90 @@
       cursor: grabbing;
     }
 
-    .clock-block {
+    /* 遵循 card 指南：语义化卡片容器，独立框体 */
+    .clock-card {
+      flex: 1 1 0;
+      min-inline-size: 0;
+      block-size: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* 确保子元素不拦截拖拽事件 */
+      justify-content: center;
+      padding-block: 4px;
+      padding-inline: 8px;
       pointer-events: none;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .label-header {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-block-end: 2px;
+      max-inline-size: 100%;
+    }
+
+    .indicator {
+      inline-size: 5px;
+      block-size: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .local-indicator {
+      background: #38bdf8;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    }
+
+    .beijing-indicator {
+      background: #f59e0b;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
     }
 
     .label {
-      font-size: 10px;
-      letter-spacing: 0.06em;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       color: #a1a1aa;
-      margin-bottom: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .time {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em;
-    }
-
-    .divider {
-      width: 1px;
-      height: 28px;
-      background: rgba(255, 255, 255, 0.15);
-      pointer-events: none;
+      color: #fafafa;
     }
   </style>
 </head>
 <body>
-  <div class="bubble" data-tauri-drag-region>
-    <div class="clock-block">
-      <span class="label" id="local-label">LOCAL</span>
-      <span class="time" id="local-time">--:--:--</span>
-    </div>
-    <div class="divider"></div>
-    <div class="clock-block">
-      <span class="label">BEIJING</span>
-      <span class="time" id="beijing-time">--:--:--</span>
-    </div>
-  </div>
+  <main class="bubble" data-tauri-drag-region>
+    <!-- 本地时钟卡片 -->
+    <article class="clock-card">
+      <header class="label-header">
+        <span class="indicator local-indicator" aria-hidden="true"></span>
+        <span class="label" id="local-label">LOCAL</span>
+      </header>
+      <time class="time" id="local-time">--:--:--</time>
+    </article>
+
+    <!-- 北京时钟卡片 -->
+    <article class="clock-card">
+      <header class="label-header">
+        <span class="indicator beijing-indicator" aria-hidden="true"></span>
+        <span class="label">BEIJING</span>
+      </header>
+      <time class="time" id="beijing-time">--:--:--</time>
+    </article>
+  </main>
 
   <script>
     const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
