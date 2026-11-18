@@ -1,0 +1,17 @@
+# Rust & Cargo
+/target/
+src-tauri/target/
+**/*.rs.bk
+*.cargo-ok
+
+# Tauri
+src-tauri/gen/
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
