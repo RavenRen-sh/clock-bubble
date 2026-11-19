@@ -185,6 +185,74 @@
       background: #f59e0b;
       box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
     }
+
+    /* 右键上下文菜单：磨砂玻璃卡片、微阴影、平滑弹出 */
+    .context-menu {
+      position: fixed;
+      z-index: 2000;
+      min-width: 110px;
+      background: rgba(22, 22, 26, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.94);
+      transform-origin: top left;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+
+    .context-menu.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #f4f4f5;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: left;
+      user-select: none;
+      -webkit-user-select: none;
+      outline: none;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .menu-item:hover,
+    .menu-item:focus-visible {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .menu-item.exit-item:hover,
+    .menu-item.exit-item:focus-visible {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .menu-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      stroke: currentColor;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +281,18 @@
     <span class="tooltip-dot" id="tooltip-dot" aria-hidden="true"></span>
     <span id="tooltip-text"></span>
   </div>
+
+  <!-- 右键上下文菜单 (WCAG 标准 role="menu") -->
+  <nav id="context-menu" class="context-menu" role="menu" aria-label="操作菜单" aria-hidden="true">
+    <button type="button" id="menu-item-exit" class="menu-item exit-item" role="menuitem">
+      <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      <span>退出程序</span>
+    </button>
+  </nav>
 
   <script>
     const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -351,10 +431,87 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         hideTooltip();
+        hideContextMenu();
       }
     });
-    document.addEventListener('pointerdown', () => {
+    document.addEventListener('pointerdown', (e) => {
       hideTooltip();
+      if (!contextMenuEl.contains(e.target)) {
+        hideContextMenu();
+      }
+    });
+
+    /* ================= 右键上下文菜单逻辑 ================= */
+    const contextMenuEl = document.getElementById('context-menu');
+    const exitItemEl = document.getElementById('menu-item-exit');
+
+    function positionContextMenu(clientX, clientY) {
+      contextMenuEl.style.display = 'flex';
+      contextMenuEl.style.visibility = 'hidden';
+      const rect = contextMenuEl.getBoundingClientRect();
+      const width = rect.width || 110;
+      const height = rect.height || 36;
+
+      // 水平方向自适应，超出右侧则向左展开
+      let left = clientX;
+      const maxLeft = window.innerWidth - width - 8;
+      if (left > maxLeft) {
+        left = clientX - width;
+      }
+      left = Math.max(8, Math.min(left, maxLeft));
+
+      // 垂直方向自适应，超出下侧则向上展开
+      let top = clientY;
+      const maxTop = window.innerHeight - height - 8;
+      if (top > maxTop) {
+        top = clientY - height;
+      }
+      top = Math.max(8, Math.min(top, maxTop));
+
+      contextMenuEl.style.left = `${Math.round(left)}px`;
+      contextMenuEl.style.top = `${Math.round(top)}px`;
+      contextMenuEl.style.visibility = 'visible';
+    }
+
+    function showContextMenu(e) {
+      e.preventDefault();
+      // 右键时隐藏可能正在显示的日期浮层
+      hideTooltip();
+
+      positionContextMenu(e.clientX, e.clientY);
+      contextMenuEl.classList.add('visible');
+      contextMenuEl.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideContextMenu() {
+      contextMenuEl.classList.remove('visible');
+      contextMenuEl.setAttribute('aria-hidden', 'true');
+    }
+
+    // 监听整个窗口的右键点击
+    window.addEventListener('contextmenu', (e) => {
+      showContextMenu(e);
+    });
+
+    // 退出程序执行函数
+    async function exitApplication() {
+      try {
+        if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+          await window.__TAURI__.core.invoke('exit_app');
+        } else if (window.__TAURI__ && window.__TAURI__.process && window.__TAURI__.process.exit) {
+          await window.__TAURI__.process.exit(0);
+        } else {
+          window.close();
+        }
+      } catch (err) {
+        console.error('Exit failed:', err);
+        window.close();
+      }
+    }
+
+    exitItemEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exitApplication();
     });
   </script>
 </body>
