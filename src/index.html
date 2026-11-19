@@ -65,7 +65,7 @@
       align-items: center;
       justify-content: center;
       padding: 6px 12px;
-      pointer-events: none;
+      pointer-events: auto;
       transition: background 0.15s ease, border-color 0.15s ease;
       overflow: hidden;
     }
@@ -114,7 +114,7 @@
       text-align: center;
     }
 
-    /* 第 2 行：大号等宽数字时间，独占一行且高度受控 */
+    /* 第 2 行：大号等宽数字时间，独占一行且高度受控，悬停检测 */
     .time {
       font-size: 18px;
       font-weight: 600;
@@ -125,29 +125,94 @@
       line-height: 1.2;
       margin-top: 4px;
       text-align: center;
+      pointer-events: auto;
+      cursor: default;
+      transition: color 0.15s ease, text-shadow 0.15s ease;
+    }
+
+    .time:hover {
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+    }
+
+    /* 悬停日期浮层：毛玻璃质感、指示灯点缀、平滑淡入淡出 */
+    .date-tooltip {
+      position: fixed;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(18, 18, 22, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #f4f4f5;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px) scale(0.96);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.2s;
+    }
+
+    .date-tooltip.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    .tooltip-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tooltip-dot.local {
+      background: #38bdf8;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+    }
+
+    .tooltip-dot.beijing {
+      background: #f59e0b;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
     }
   </style>
 </head>
 <body>
   <main class="bubble" data-tauri-drag-region>
     <!-- 本地时钟卡片 -->
-    <article class="clock-card">
+    <article class="clock-card" data-tauri-drag-region>
       <header class="label-box">
         <span class="indicator local-indicator" aria-hidden="true"></span>
         <span class="label" id="local-label">LOCAL</span>
       </header>
-      <time class="time" id="local-time">--:--:--</time>
+      <time class="time" id="local-time" aria-describedby="date-tooltip" data-tauri-drag-region>--:--:--</time>
     </article>
 
     <!-- 北京时钟卡片 -->
-    <article class="clock-card">
+    <article class="clock-card" data-tauri-drag-region>
       <header class="label-box">
         <span class="indicator beijing-indicator" aria-hidden="true"></span>
         <span class="label">BEIJING</span>
       </header>
-      <time class="time" id="beijing-time">--:--:--</time>
+      <time class="time" id="beijing-time" aria-describedby="date-tooltip" data-tauri-drag-region>--:--:--</time>
     </article>
   </main>
+
+  <!-- 悬停日期提示浮层 (WCAG 1.4.13 标准 role="tooltip") -->
+  <div id="date-tooltip" class="date-tooltip" role="tooltip" aria-hidden="true">
+    <span class="tooltip-dot" id="tooltip-dot" aria-hidden="true"></span>
+    <span id="tooltip-text"></span>
+  </div>
 
   <script>
     const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -185,6 +250,112 @@
     }
 
     updateClocks();
+
+    /* ================= 悬停日期提示逻辑 ================= */
+    const tooltipEl = document.getElementById('date-tooltip');
+    const tooltipDotEl = document.getElementById('tooltip-dot');
+    const tooltipTextEl = document.getElementById('tooltip-text');
+
+    function formatDate(timeZone) {
+      const now = new Date();
+      const datePart = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(now);
+      const weekday = new Intl.DateTimeFormat('zh-CN', {
+        timeZone,
+        weekday: 'short'
+      }).format(now);
+      return `${datePart} ${weekday}`;
+    }
+
+    let hideTimer = null;
+
+    function positionTooltip(clientX, clientY) {
+      const rect = tooltipEl.getBoundingClientRect();
+      const width = rect.width || 120;
+      const height = rect.height || 26;
+
+      // 水平方向以鼠标为中心，边缘留出 10px 边距防裁切
+      let left = clientX - (width / 2);
+      const minLeft = 10;
+      const maxLeft = window.innerWidth - width - 10;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      // 垂直方向默认在鼠标下方 12px；若超出视口底部，则翻转到鼠标上方 10px
+      let top = clientY + 12;
+      const maxTop = window.innerHeight - height - 10;
+      if (top > maxTop) {
+        top = clientY - height - 10;
+      }
+      const minTop = 10;
+      top = Math.max(minTop, Math.min(top, maxTop));
+
+      tooltipEl.style.left = `${Math.round(left)}px`;
+      tooltipEl.style.top = `${Math.round(top)}px`;
+    }
+
+    function showTooltip(timeZone, dotClass, e) {
+      tooltipTextEl.textContent = formatDate(timeZone);
+      tooltipDotEl.className = `tooltip-dot ${dotClass}`;
+
+      // 确保在计算坐标前测量尺寸
+      tooltipEl.style.display = 'inline-flex';
+      tooltipEl.style.visibility = 'hidden';
+      positionTooltip(e.clientX, e.clientY);
+      tooltipEl.style.visibility = 'visible';
+      tooltipEl.classList.add('visible');
+      tooltipEl.setAttribute('aria-hidden', 'false');
+
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+      // 大约 10 秒后自动平滑消失
+      hideTimer = setTimeout(() => {
+        hideTooltip();
+      }, 10000);
+    }
+
+    function hideTooltip() {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      tooltipEl.classList.remove('visible');
+      tooltipEl.setAttribute('aria-hidden', 'true');
+    }
+
+    // 本地时间悬停
+    localEl.addEventListener('mouseenter', (e) => {
+      showTooltip(localZone, 'local', e);
+    });
+    localEl.addEventListener('mousemove', (e) => {
+      if (!tooltipEl.classList.contains('visible')) {
+        showTooltip(localZone, 'local', e);
+      }
+    });
+
+    // 北京时间悬停
+    beijingEl.addEventListener('mouseenter', (e) => {
+      showTooltip('Asia/Shanghai', 'beijing', e);
+    });
+    beijingEl.addEventListener('mousemove', (e) => {
+      if (!tooltipEl.classList.contains('visible')) {
+        showTooltip('Asia/Shanghai', 'beijing', e);
+      }
+    });
+
+    // 轻量关闭：按 Escape 键或点击/拖拽时立即关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideTooltip();
+      }
+    });
+    document.addEventListener('pointerdown', () => {
+      hideTooltip();
+    });
   </script>
 </body>
 </html>
